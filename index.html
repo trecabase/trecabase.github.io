@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>カード相場LOG | ホロライブOCG・クロススターズ 最新相場</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <header class="site-header">
+        <div class="container">
+            <h1 class="site-logo">🃏 カード相場LOG</h1>
+            <p class="site-desc">ホロライブOCG・クロススターズの最新カード相場をチェック</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="game-tabs" id="gameTabs">
+            <button class="game-tab-btn active" data-game="hololive">ホロライブOCG</button>
+            <button class="game-tab-btn" data-game="xrossstars">クロススターズ</button>
+        </div>
+
+        <div class="set-tabs" id="setTabs"></div>
+
+        <div class="filter-bar" id="filterBar"></div>
+
+        <div class="search-wrap" id="searchBox"></div>
+
+        <div class="updated-at" id="updatedAt"></div>
+
+        <div class="card-grid" id="cardGrid"></div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p>※ 価格は参考値です。実際の相場と異なる場合があります。</p>
+            <p>ホロライブOCG画像：<a href="https://hololive-official-cardgame.com/" target="_blank" rel="noopener">hololive Official Card Game</a>　クロススターズ画像：<a href="https://xross-stars.com/" target="_blank" rel="noopener">Xross Stars</a>　価格参照：遊々亭</p>
+        </div>
+    </footer>
+
+    <!-- 価格推移チャートモーダル -->
+    <div id="chartModal" class="chart-modal-overlay">
+        <div class="chart-modal">
+            <button class="chart-modal-close" id="chartModalClose">×</button>
+            <div class="chart-modal-body">
+                <div class="chart-modal-left">
+                    <img id="modalCardImg" src="" alt="">
+                    <div>
+                        <div id="modalCardName" class="modal-card-name"></div>
+                        <div class="modal-card-meta">
+                            <span id="modalCardNo"></span>
+                            <span id="modalCardRarity" class="rarity-badge"></span>
+                        </div>
+                        <div class="modal-prices">
+                            <div class="modal-price sell">
+                                <span class="modal-price-label">販売</span>
+                                <span id="modalSellPrice" class="modal-price-value"></span>
+                            </div>
+                            <div class="modal-price buy">
+                                <span class="modal-price-label">買取</span>
+                                <span id="modalBuyPrice" class="modal-price-value"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-modal-right">
+                    <div class="chart-section-title">価格推移</div>
+                    <div class="chart-legend">
+                        <span class="legend-sell">● 販売価格</span>
+                        <span class="legend-buy">● 買取価格</span>
+                    </div>
+                    <div class="chart-canvas-wrap">
+                        <canvas id="priceChart"></canvas>
+                    </div>
+                    <div id="chartNote" class="chart-note"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="data/hololive.js"></script>
+    <script src="data/xrossstars.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+name: 価格自動更新
+
+on:
+  schedule:
+    - cron: '0 1 1 * *'   # 毎月1日 午前10時JST（UTC 01:00）
+    - cron: '0 1 15 * *'  # 毎月15日 午前10時JST（UTC 01:00）
+  workflow_dispatch:       # GitHub画面から手動実行も可能
+
+jobs:
+  update-prices:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write  # コミット・プッシュに必要
+
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Python をセットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 価格更新スクリプトを実行
+        run: python scripts/update_prices.py
+
+      - name: 変更をコミット＆プッシュ
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet; then
+            echo "価格に変化なし。スキップします。"
+          else
+            git add data/hololive.js data/xrossstars.js data/price_history.json
+            git commit -m "自動価格更新: $(TZ=Asia/Tokyo date +'%Y年%m月%d日')"
+            git push
+          fi

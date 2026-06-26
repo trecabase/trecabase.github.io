@@ -15,21 +15,32 @@
         </div>
     </header>
 
-    <main class="container">
-        <div class="game-tabs" id="gameTabs">
-            <button class="game-tab-btn active" data-game="hololive">ホロライブOCG</button>
-            <button class="game-tab-btn" data-game="xrossstars">クロススターズ</button>
+    <main>
+        <div class="container">
+            <div class="game-tabs" id="gameTabs">
+                <button class="game-tab-btn active" data-game="hololive">ホロライブOCG</button>
+                <button class="game-tab-btn" data-game="xrossstars">クロススターズ</button>
+            </div>
+            <div class="set-tabs" id="setTabs"></div>
         </div>
 
-        <div class="set-tabs" id="setTabs"></div>
+        <div class="controls-sticky">
+            <div class="container">
+                <div class="controls-top">
+                    <div class="search-wrap" id="searchBox"></div>
+                    <div id="sortBar"></div>
+                </div>
+                <div class="filter-bar" id="filterBar"></div>
+                <div class="controls-meta">
+                    <div class="updated-at" id="updatedAt"></div>
+                    <div class="card-count" id="cardCount"></div>
+                </div>
+            </div>
+        </div>
 
-        <div class="filter-bar" id="filterBar"></div>
-
-        <div class="search-wrap" id="searchBox"></div>
-
-        <div class="updated-at" id="updatedAt"></div>
-
-        <div class="card-grid" id="cardGrid"></div>
+        <div class="container">
+            <div class="card-grid" id="cardGrid"></div>
+        </div>
     </main>
 
     <footer class="site-footer">
@@ -38,6 +49,8 @@
             <p>ホロライブOCG画像：<a href="https://hololive-official-cardgame.com/" target="_blank" rel="noopener">hololive Official Card Game</a>　クロススターズ画像：<a href="https://xross-stars.com/" target="_blank" rel="noopener">Xross Stars</a>　価格参照：遊々亭</p>
         </div>
     </footer>
+
+    <button class="back-to-top" id="backToTop" aria-label="トップへ戻る">↑</button>
 
     <!-- 価格推移チャートモーダル -->
     <div id="chartModal" class="chart-modal-overlay">

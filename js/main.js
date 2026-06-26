@@ -3,13 +3,15 @@ const gameDataMap = {
     xrossstars: xrossStarsData
 };
 
-let currentGame = "hololive";
-let currentSet = null;
-let currentRarity = "all";
-let currentCards = [];
-let currentSearch = "";
+let currentGame    = "hololive";
+let currentSet     = null;
+let currentRarity  = "all";
+let currentSort    = "sellPrice-desc";
+let currentSearch  = "";
+let currentCards   = [];
 
 function formatPrice(price) {
+    if (!price) return "―";
     return "¥" + price.toLocaleString("ja-JP");
 }
 
@@ -38,6 +40,26 @@ function getRankClass(rank) {
     return "";
 }
 
+function renderGameTabs() {
+    document.getElementById("gameTabs").querySelectorAll(".game-tab-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll(".game-tab-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            currentGame   = btn.dataset.game;
+            currentRarity = "all";
+            currentSearch = "";
+            currentSort   = "sellPrice-desc";
+            const gameData = gameDataMap[currentGame];
+            currentSet = gameData.sets[0].id;
+            renderSetTabs(gameData.sets);
+            renderRarityFilter();
+            renderSearchBox();
+            renderSortBar();
+            renderCards();
+        });
+    });
+}
+
 function renderSetTabs(sets) {
     const container = document.getElementById("setTabs");
     container.innerHTML =
@@ -46,7 +68,7 @@ function renderSetTabs(sets) {
         `</select>`;
 
     container.querySelector(".set-select").addEventListener("change", function() {
-        currentSet = this.value;
+        currentSet    = this.value;
         currentRarity = "all";
         renderRarityFilter();
         renderCards();
@@ -54,7 +76,7 @@ function renderSetTabs(sets) {
 }
 
 function getRarities(cards) {
-    const order = ["SEC", "OUR", "UR", "LRPP", "LRP", "SRP", "SR★★★", "SR★★", "SR★", "LR", "SR", "R", "C"];
+    const order = ["SEC","OUR","UR","LRPP","LRP","SRP","SR★★★","SR★★","SR★","LR","SR","R","C"];
     const found = [...new Set(cards.map(c => c.rarity))];
     return found.sort((a, b) => {
         const ai = order.indexOf(a);
@@ -95,6 +117,33 @@ function renderSearchBox() {
     });
 }
 
+function renderSortBar() {
+    const container = document.getElementById("sortBar");
+    container.innerHTML = `
+        <select class="sort-select">
+            <option value="sellPrice-desc">販売価格 高い順</option>
+            <option value="sellPrice-asc">販売価格 低い順</option>
+            <option value="buyPrice-desc">買取価格 高い順</option>
+            <option value="buyPrice-asc">買取価格 低い順</option>
+            <option value="cardNo-asc">カード番号順</option>
+        </select>
+    `;
+    container.querySelector(".sort-select").value = currentSort;
+    container.querySelector(".sort-select").addEventListener("change", function() {
+        currentSort = this.value;
+        renderCards();
+    });
+}
+
+function updateCardCount(shown, total) {
+    const el = document.getElementById("cardCount");
+    if (shown === total) {
+        el.innerHTML = `<strong>${total}</strong>件`;
+    } else {
+        el.innerHTML = `${total}件中 <strong>${shown}</strong>件表示`;
+    }
+}
+
 function renderCards() {
     const gameData = gameDataMap[currentGame];
     const set = gameData.sets.find(s => s.id === currentSet);
@@ -102,7 +151,8 @@ function renderCards() {
 
     document.getElementById("updatedAt").textContent = `最終更新：${set.updatedAt}　※価格は参考値です`;
 
-    let cards = [...set.cards].sort((a, b) => b.sellPrice - a.sellPrice);
+    let cards = [...set.cards];
+
     if (currentRarity !== "all") {
         cards = cards.filter(c => c.rarity === currentRarity);
     }
@@ -114,7 +164,19 @@ function renderCards() {
         );
     }
 
+    /* ソート */
+    const [sortField, sortDir] = currentSort.split("-");
+    cards.sort((a, b) => {
+        if (sortField === "cardNo") {
+            const cmp = a.cardNo.localeCompare(b.cardNo, "ja");
+            return sortDir === "asc" ? cmp : -cmp;
+        }
+        const diff = (a[sortField] || 0) - (b[sortField] || 0);
+        return sortDir === "asc" ? diff : -diff;
+    });
+
     currentCards = cards;
+    updateCardCount(cards.length, set.cards.length);
 
     const grid = document.getElementById("cardGrid");
     if (cards.length === 0) {
@@ -123,26 +185,25 @@ function renderCards() {
     }
 
     grid.innerHTML = cards.map((card, i) => {
-        const rank = i + 1;
+        const rank      = i + 1;
         const rankClass = getRankClass(rank);
         const rarityClass = getRarityClass(card.rarity);
         const variantText = card.variant ? ` <span class="card-variant">${card.variant}</span>` : "";
+        const noImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='140'%3E%3Crect width='100%25' height='100%25' fill='%231a1a2e'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23444' font-size='11'%3ENo Image%3C/text%3E%3C/svg%3E";
+
         return `
         <div class="card-item" data-card-idx="${i}">
             <div class="card-image-wrap">
-                <img
-                    src="${card.image}"
-                    alt="${card.name}"
-                    loading="lazy"
-                    onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22140%22%3E%3Crect width=%22100%25%22 height=%22100%25%22 fill=%22%231a1a2e%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23555%22 font-size=%2212%22%3ENo Image%3C/text%3E%3C/svg%3E'"
-                >
+                <img src="${card.image || noImg}" alt="${card.name}" loading="lazy" onerror="this.src='${noImg}'">
                 <span class="rank-badge ${rankClass}">${rank}位</span>
             </div>
             <div class="card-info">
-                <div class="card-name">${card.name}${variantText}</div>
-                <div class="card-meta">
-                    <span class="card-no">${card.cardNo}</span>
-                    <span class="rarity-badge ${rarityClass}">${card.rarity}</span>
+                <div>
+                    <div class="card-name">${card.name}${variantText}</div>
+                    <div class="card-meta">
+                        <span class="card-no">${card.cardNo}</span>
+                        <span class="rarity-badge ${rarityClass}">${card.rarity}</span>
+                    </div>
                 </div>
                 <div class="card-prices">
                     <div class="price sell-price">
@@ -168,7 +229,7 @@ function renderCards() {
 function openChartModal(card) {
     const modal = document.getElementById("chartModal");
 
-    document.getElementById("modalCardImg").src = card.image;
+    document.getElementById("modalCardImg").src = card.image || "";
     document.getElementById("modalCardImg").alt = card.name;
     document.getElementById("modalCardName").textContent = card.name + (card.variant ? `【${card.variant}】` : "");
     document.getElementById("modalCardNo").textContent = card.cardNo;
@@ -194,18 +255,18 @@ function openChartModal(card) {
 }
 
 function drawPriceChart(canvas, history) {
-    const dpr = window.devicePixelRatio || 1;
+    const dpr  = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
     canvas.width  = rect.width  * dpr;
     canvas.height = rect.height * dpr;
     const ctx = canvas.getContext("2d");
     ctx.scale(dpr, dpr);
 
-    const W = rect.width;
-    const H = rect.height;
+    const W   = rect.width;
+    const H   = rect.height;
     const PAD = { top: 24, right: 16, bottom: 44, left: 64 };
-    const cW = W - PAD.left - PAD.right;
-    const cH = H - PAD.top - PAD.bottom;
+    const cW  = W - PAD.left - PAD.right;
+    const cH  = H - PAD.top  - PAD.bottom;
 
     ctx.fillStyle = "#0f0f20";
     ctx.fillRect(0, 0, W, H);
@@ -218,14 +279,12 @@ function drawPriceChart(canvas, history) {
     let minP = Math.min(...allPrices);
     let maxP = Math.max(...allPrices);
 
-    /* Y軸の余白 */
     const spread = maxP - minP || maxP * 0.2;
     minP = Math.max(0, minP - spread * 0.2);
     maxP = maxP + spread * 0.15;
 
-    /* 綺麗な目盛り */
     const rawStep = (maxP - minP) / 4;
-    const mag = Math.pow(10, Math.floor(Math.log10(rawStep)));
+    const mag  = Math.pow(10, Math.floor(Math.log10(rawStep)));
     const step = Math.ceil(rawStep / mag) * mag;
     minP = Math.floor(minP / step) * step;
     maxP = minP + step * 5;
@@ -236,9 +295,8 @@ function drawPriceChart(canvas, history) {
         return PAD.left + (i / (history.length - 1)) * cW;
     };
 
-    /* グリッド＆Y軸ラベル */
     ctx.textAlign = "right";
-    ctx.font = `${11 * dpr / dpr}px sans-serif`;
+    ctx.font = "11px sans-serif";
     for (let i = 0; i <= 5; i++) {
         const p = minP + step * i;
         const y = toY(p);
@@ -256,7 +314,6 @@ function drawPriceChart(canvas, history) {
         ctx.fillText(label, PAD.left - 6, y + 4);
     }
 
-    /* X軸ラベル */
     ctx.textAlign = "center";
     ctx.fillStyle = "#6666aa";
     let prevYear = "";
@@ -272,7 +329,6 @@ function drawPriceChart(canvas, history) {
         }
     });
 
-    /* 折れ線を描く共通関数 */
     const drawLine = (priceIdx, color) => {
         ctx.strokeStyle = color;
         ctx.lineWidth = 2;
@@ -298,10 +354,9 @@ function drawPriceChart(canvas, history) {
         });
     };
 
-    drawLine(1, "#4ecdc4"); /* 販売 */
-    drawLine(2, "#ff6b6b"); /* 買取 */
+    drawLine(1, "#4ecdc4");
+    drawLine(2, "#ff6b6b");
 
-    /* 1点のみの場合は注記 */
     const noteEl = document.getElementById("chartNote");
     if (history.length === 1) {
         const [yr, mo] = history[0][0].split("-");
@@ -333,24 +388,18 @@ function initChartModal() {
     });
 }
 
-function renderGameTabs() {
-    document.getElementById("gameTabs").querySelectorAll(".game-tab-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-            document.querySelectorAll(".game-tab-btn").forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-            currentGame = btn.dataset.game;
-            currentRarity = "all";
-            currentSearch = "";
-            const gameData = gameDataMap[currentGame];
-            currentSet = gameData.sets[0].id;
-            renderSetTabs(gameData.sets);
-            renderRarityFilter();
-            renderSearchBox();
-            renderCards();
-        });
+/* ===== トップへ戻るボタン ===== */
+function initBackToTop() {
+    const btn = document.getElementById("backToTop");
+    window.addEventListener("scroll", () => {
+        btn.classList.toggle("visible", window.scrollY > 400);
+    }, { passive: true });
+    btn.addEventListener("click", () => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
     });
 }
 
+/* ===== 初期化 ===== */
 function init() {
     const gameData = gameDataMap[currentGame];
     currentSet = gameData.sets[0].id;
@@ -358,8 +407,10 @@ function init() {
     renderSetTabs(gameData.sets);
     renderRarityFilter();
     renderSearchBox();
+    renderSortBar();
     renderCards();
     initChartModal();
+    initBackToTop();
 }
 
 document.addEventListener("DOMContentLoaded", init);

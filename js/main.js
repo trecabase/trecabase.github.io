@@ -127,8 +127,6 @@ function renderCards() {
         const rankClass = getRankClass(rank);
         const rarityClass = getRarityClass(card.rarity);
         const variantText = card.variant ? ` <span class="card-variant">${card.variant}</span>` : "";
-        const buyLink = card.link ? card.link.replace("/sell/", "/buy/") : "";
-
         return `
         <div class="card-item" data-card-idx="${i}">
             <div class="card-image-wrap">
@@ -156,10 +154,10 @@ function renderCards() {
                         <span class="price-value">${formatPrice(card.buyPrice)}</span>
                     </div>
                 </div>
-                ${card.link ? `<div class="card-links">
-                    <a href="${card.link}" target="_blank" rel="noopener" class="card-link-btn sell-btn">購入</a>
-                    <a href="${buyLink}" target="_blank" rel="noopener" class="card-link-btn buy-btn">売る</a>
-                </div>` : ""}
+                <div class="card-links">
+                    <a href="${card.buyLink}" target="_blank" rel="noopener" class="card-link-btn sell-btn">購入</a>
+                    <a href="${card.sellLink}" target="_blank" rel="noopener" class="card-link-btn buy-btn">売る</a>
+                </div>
             </div>
         </div>`;
     }).join("");

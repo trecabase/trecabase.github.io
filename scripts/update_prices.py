@@ -14,10 +14,20 @@ import time
 import json
 import os
 import urllib.request
+import urllib.parse
 from datetime import datetime, timezone, timedelta
 
 JST     = timezone(timedelta(hours=9))
 HEADERS = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"}
+
+RAKUTEN_AFFILIATE_ID = "55409655.0ae509de.55409656.206fac1b"
+
+def rakuten_link(card_no, rarity):
+    """楽天アフィリエイトリンク生成（カード番号+レアリティで楽天内検索）"""
+    query      = urllib.parse.quote(f"{card_no} {rarity}")
+    search_url = f"https://search.rakuten.co.jp/search/mall/{query}/"
+    encoded    = urllib.parse.quote(search_url, safe="")
+    return f"https://hb.afl.rakuten.co.jp/ichiba/{RAKUTEN_AFFILIATE_ID}/?pc={encoded}"
 
 # ホロライブOCG セット一覧（新→旧）
 HOCG_SETS = [
@@ -195,16 +205,16 @@ def generate_hololive_js(sets_data, history, today_str):
             variant   = info["variant"]
             sell      = info["sellPrice"]
             buy_price = info["buyPrice"]
-            link      = info["link"]
+            yuyutei   = info["link"]
             hist_str  = format_history(history, card_no, rarity)
             image     = f"`${{HOCG}}/{set_dir}/{card_no}_{rarity}.png`"
-            # 名前のパディング（見た目）
+            rakuten   = rakuten_link(card_no, rarity)
             lines.append(
                 f'                {{ cardNo:"{card_no}", name:"{name}", variant:"{variant}",'
                 f' rarity:"{rarity}", sellPrice:{sell}, buyPrice:{buy_price},'
                 f' priceHistory:{hist_str},'
                 f' image:{image},'
-                f' link:"{link}" }},\n'
+                f' buyLink:"{rakuten}", sellLink:"{yuyutei}" }},\n'
             )
 
         lines.append('            ]\n')
@@ -244,10 +254,10 @@ def generate_xs_js(sets_data, history, image_hashes, today_str):
             variant   = info["variant"]
             sell      = info["sellPrice"]
             buy_price = info["buyPrice"]
-            link      = info["link"]
+            yuyutei   = info["link"]
             hist_str  = format_history(history, card_no, rarity)
+            rakuten   = rakuten_link(card_no, rarity)
 
-            # 画像URL（既知のハッシュがあれば使用、なければ空）
             img_key = f"{card_no}_{rarity}"
             img_url = image_hashes.get(img_key, "")
             image   = f'"{img_url}"' if img_url else '""'
@@ -257,7 +267,7 @@ def generate_xs_js(sets_data, history, image_hashes, today_str):
                 f' rarity:"{rarity}", sellPrice:{sell}, buyPrice:{buy_price},'
                 f' priceHistory:{hist_str},'
                 f' image:{image},'
-                f' link:"{link}" }},\n'
+                f' buyLink:"{rakuten}", sellLink:"{yuyutei}" }},\n'
             )
 
         lines.append('            ]\n')
